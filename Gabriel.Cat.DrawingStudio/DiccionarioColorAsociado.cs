@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Gabriel.Cat.DrawingStudio
 {
-    //peta por stack overflow al hacer el new
+    //no funciona bien cuando coge el primero pero si que lo hace cuando hace el GetEnumerator :)
     public class DiccionarioColor : IEnumerable<KeyValuePair<byte[], byte[][]>>
     {
         A[] diccionario;
@@ -40,7 +40,7 @@ namespace Gabriel.Cat.DrawingStudio
         }
         public void Añadir(Color key, Color value)
         {
-            byte[] keyArray = ToByteArray(key);
+            byte[] keyArray = ToByteArrayInverted(key);
             byte posicion = Posicion(keyArray);
             if (diccionario[posicion] == null)
                 diccionario[posicion] = new A();
@@ -49,7 +49,12 @@ namespace Gabriel.Cat.DrawingStudio
 
         private byte[] ToByteArray(Color color)
         {
-            return new byte[] {color.B,color.G,color.R,color.A };//lo permuto aqui y listo :) parece que color cuando se escribe en una array los colores se giran...se permutan...ARGB->BGRA
+
+            return new byte[] { color.A, color.R, color.G, color.B };
+        }
+        private byte[] ToByteArrayInverted(Color color)
+        {
+             return new byte[] {color.B,color.G,color.R,color.A };//lo permuto aqui y listo :) parece que color cuando se escribe en una array los colores se giran...se permutan...ARGB->BGRA
         }
 
         public void Añadir(IEnumerable<KeyValuePair<Color, Color[]>> colorsKeyValues)
@@ -119,7 +124,7 @@ namespace Gabriel.Cat.DrawingStudio
                                             for (int b = 0; b < LENGTH; b++)
                                             {
                                                 objetos = baseG.rango[b] as List<byte[]>;
-                                                if (objetos[0] != null)
+                                                if (objetos.Count>0)
                                                 {
                                                     key = new byte[] { (byte)a, (byte)r, (byte)g, (byte)b };
                                                     value = objetos.ToArray();
@@ -242,7 +247,6 @@ namespace Gabriel.Cat.DrawingStudio
             for (int i = 0; i < rango.Length; i++)
             {
                 rango[i] = new List<byte[]>();
-                ((List<byte[]>)rango[i]).Add(null);
             }
         }
         protected override dynamic Objeto()
@@ -256,15 +260,16 @@ namespace Gabriel.Cat.DrawingStudio
         }
         public override byte[] ObtenerPrimero(byte[] key)
         {
-            return ((List<byte[]>)rango[key[Pixel.B]])[0];
+
+            byte[] color = null;
+            List<byte[]> list=((List<byte[]>)rango[key[Pixel.B]]);
+            if (list.Count > 0)
+                color = list[0];
+            return color;
         }
         public override void Añadir(byte[] key, byte[] value)
         {
             List<byte[]> list = (List<byte[]>)rango[key[Pixel.B]];
-            if (list[0] == null)
-            {
-                list.RemoveAt(0);
-            }
             list.Add(value);
         }
         public override void Eliminar(byte[] key)

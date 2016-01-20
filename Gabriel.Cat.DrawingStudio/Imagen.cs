@@ -18,7 +18,7 @@ namespace Gabriel.Cat
     }
     public class Pixel
     {
-        public const int A = 0, R = 1, G = 2, B = 3;
+        public const int  R = 2, G = 1, B = 0, A = 3;
     }
     public class Collage : IEnumerable<ImageFragment>
     {

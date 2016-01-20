@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Gabriel.Cat.DrawingStudio;
 namespace Gabriel.Cat.Extension
 {
-   public static class ExtensionBitmap
+    public static class ExtensionBitmap
     {
         delegate byte[] MetodoColor(byte[][] colores);
         #region BitmapImportado
@@ -54,12 +54,13 @@ namespace Gabriel.Cat.Extension
         }
 
 
-    
+
 
         public static Color[,] GetColorMatriu(this Bitmap bmp)
         {
             Color[,] matriz = new Color[bmp.Width, bmp.Height];
-            bmp.TrataBytes((arrayBytes) => {
+            bmp.TrataBytes((arrayBytes) =>
+            {
                 ulong posicion = 0;
                 for (int y = 0, yFinal = bmp.Width; y < yFinal; y++)
                     for (int x = 0, xFinal = bmp.Height; x < xFinal; x++, posicion += 4)
@@ -71,7 +72,8 @@ namespace Gabriel.Cat.Extension
         public static Bitmap GetBitmap(this Color[,] array)
         {
             Bitmap bmp = new Bitmap(array.GetLength(DimensionMatriz.X), array.GetLength(DimensionMatriz.Y));
-            bmp.TrataBytes((arrayBytes) => {
+            bmp.TrataBytes((arrayBytes) =>
+            {
                 ulong posicion = 0;
                 for (ulong y = 0, yFinal = (ulong)array.GetLongLength((int)DimensionMatriz.Y); y < yFinal; y++)
                     for (ulong x = 0, xFinal = (ulong)array.GetLongLength((int)DimensionMatriz.X); x < xFinal; x++, posicion += 4)
@@ -95,7 +97,8 @@ namespace Gabriel.Cat.Extension
             if (bmp.Height * bmp.Width * 3 != matriuBytes.GetLength(DimensionMatriz.Y) * matriuBytes.GetLength(DimensionMatriz.X))
                 throw new Exception("La matriz no tiene las medidas de la imagen");
 
-            bmp.TrataBytes((arrayBytes) => {
+            bmp.TrataBytes((arrayBytes) =>
+            {
                 ulong posicion = 0;
                 for (ulong y = 0, yFinal = (ulong)arrayBytes.GetLongLength((int)DimensionMatriz.Y); y < yFinal; y++)
                     for (ulong x = 0, xFinal = (ulong)arrayBytes.GetLongLength((int)DimensionMatriz.X); x < xFinal; x++)
@@ -181,17 +184,21 @@ namespace Gabriel.Cat.Extension
 
         private static unsafe void ICambiaColor(byte* rgbImg, bool isArgb, int lenght, PixelColors color)
         {
-
+            int r = 0, g = 1, b = 2;
             byte byteR, byteG, byteB;
             int incremento = 3;
-            if (isArgb) incremento++;//me salto el alfa
+            if (isArgb)
+            {
+                incremento++;
+            }
+            //me salto el alfa
             for (int i = 0; i < lenght; i += incremento)
             {
 
 
-                byteR = rgbImg[i + Pixel.R];
-                byteG = rgbImg[i + Pixel.G];
-                byteB = rgbImg[i + Pixel.B];
+                byteR = rgbImg[i + r];
+                byteG = rgbImg[i + g];
+                byteB = rgbImg[i + b];
 
                 switch (color)
                 {
@@ -216,27 +223,67 @@ namespace Gabriel.Cat.Extension
 
 
                 }
-                rgbImg[i + Pixel.R] = byteR;
-                rgbImg[i + Pixel.G] = byteG;
-                rgbImg[i + Pixel.B] = byteB;
+                rgbImg[i + r] = byteR;
+                rgbImg[i + g] = byteG;
+                rgbImg[i + b] = byteB;
 
             }
 
         }
 
         #endregion
-        
-        public static void CambiarPixel(this Bitmap bmp,Color aEnontrar,Color aDefinir)
+
+        public static void CambiarPixel(this Bitmap bmp, Color aEnontrar, Color aDefinir)
         {
-            bmp.CambiarPixel(new KeyValuePair<Color, Color>[] { new KeyValuePair<Color, Color>(aEnontrar, aDefinir)});
+            bmp.CambiarPixel(new KeyValuePair<Color, Color>[] { new KeyValuePair<Color, Color>(aEnontrar, aDefinir) });
         }
-        public static void CambiarPixel(this Bitmap bmp,IEnumerable<KeyValuePair<Color,Color>> colorsKeyValue)
+        public static void CambiarPixel(this Bitmap bmp, IEnumerable<KeyValuePair<Color, Color>> colorsKeyValue)
         {
-            MetodoColor metodo= (colores) => {
-                byte[] color = colores[0] != null? colores[0] : colores[1];
-                return  color;
+            MetodoColor metodo = (colores) =>
+            {
+                return colores[0];
             };
             ICambiaPixel(bmp, colorsKeyValue, metodo);
+        }
+        public static void EfectoPixel(this Bitmap bmp, Color aMezclarConTodos,bool saltarsePixelsTransparentes=true)
+        {
+            int incremento = bmp.IsArgb() ? 4 : 3;
+            int aux;
+            bool mezclar = true;
+            const byte TRANSPARENTE = 0x00;
+            bmp.TrataBytes((byteArray) =>
+            {
+                for (int i = 0, iFinal = bmp.LengthBytes(); i < iFinal; i += incremento)
+                {
+                    if (incremento == 4)
+                    {
+                        if(saltarsePixelsTransparentes)
+                           mezclar = byteArray[i + Pixel.A] != TRANSPARENTE;
+                        if (mezclar)
+                        {
+                            //MEZCLO LA A
+                            aux = byteArray[i + Pixel.A] + aMezclarConTodos.A;
+                            if (aux > 255) aux = 255;
+                            byteArray[i + Pixel.A] = (byte)aux;
+                        }
+                    }
+                    if (mezclar)
+                    {
+                        //MEZCLO LA R
+                        aux = byteArray[i + Pixel.R] + aMezclarConTodos.R;
+                        if (aux > 255) aux = 255;
+                        byteArray[i + Pixel.R] = (byte)aux;
+                        //MEZCLO LA G
+                        aux = byteArray[i + Pixel.G] + aMezclarConTodos.G;
+                        if (aux > 255) aux = 255;
+                        byteArray[i + Pixel.G] = (byte)aux;
+                        //MEZCLO LA B
+                        aux = byteArray[i + Pixel.B] + aMezclarConTodos.B;
+                        if (aux > 255) aux = 255;
+                        byteArray[i + Pixel.B] = (byte)aux;
+                    }
+                }
+            });
         }
         public static void MezclaPixel(this Bitmap bmp, Color aEnontrar, Color aDefinir)
         {
@@ -244,8 +291,9 @@ namespace Gabriel.Cat.Extension
         }
         public static void MezclaPixel(this Bitmap bmp, IEnumerable<KeyValuePair<Color, Color>> colorsKeyValue)
         {
-            MetodoColor metodo = (colores) => {
-                byte[] colorMezclado=null;
+            MetodoColor metodo = (colores) =>
+            {
+                byte[] colorMezclado = null;
                 int aux;
                 if (colores[0] != null && colores[1] != null)
                 {
@@ -263,40 +311,36 @@ namespace Gabriel.Cat.Extension
                 else
                     colorMezclado = colores[1];
                 return colorMezclado;
-                 };
+            };
             ICambiaPixel(bmp, colorsKeyValue, metodo);
         }
         static void ICambiaPixel(Bitmap bmp, IEnumerable<KeyValuePair<Color, Color>> colorsKeyValue, MetodoColor metodo)
         {
             DiccionarioColor diccionario = new DiccionarioColor(colorsKeyValue);
-            var array = diccionario.ToArray();
             byte[] color;
-            const byte AOPACA= 0xFF;
+            const byte AOPACA = 0xFF;
             int incremento = bmp.IsArgb() ? 4 : 3;
             bmp.TrataBytes((byteArray) =>
             {
                 for (int i = 0, iFin = bmp.LengthBytes(); i < iFin; i += incremento)
                 {
+                    color = new byte[] { AOPACA, byteArray[i + Pixel.R], byteArray[i + Pixel.G], byteArray[i + Pixel.B] };
                     if (incremento == 4)
                     {
-                        color = new byte[] { byteArray[i + Pixel.A], byteArray[i + Pixel.R], byteArray[i + Pixel.G], byteArray[i + Pixel.B]};//creo los colores permutados
+                        color[Pixel.A] = byteArray[i + Pixel.A];
                     }
-                    else
+                    color = metodo(new byte[][] { diccionario.ObtenerPrimero(color), color });
+                    if (color != null)
                     {
-                        color = new byte[] {  AOPACA, byteArray[i + Pixel.R], byteArray[i + Pixel.G], byteArray[i + Pixel.B] };
-                    }
-                        color = metodo(new byte[][] { diccionario.ObtenerPrimero(color), color });
-                        if (color!=null)
+                        if (incremento == 4)
                         {
-                            if (incremento == 4)
-                            {
-                                byteArray[i + Pixel.A] = color[Pixel.A];
-                            }
-
-                            byteArray[i + Pixel.R] = color[Pixel.R];
-                            byteArray[i + Pixel.G] = color[Pixel.G];
-                            byteArray[i + Pixel.B] = color[Pixel.B];
+                            byteArray[i + Pixel.A] = color[Pixel.A];
                         }
+
+                        byteArray[i + Pixel.R] = color[Pixel.R];
+                        byteArray[i + Pixel.G] = color[Pixel.G];
+                        byteArray[i + Pixel.B] = color[Pixel.B];
+                    }
 
                 }
             });
