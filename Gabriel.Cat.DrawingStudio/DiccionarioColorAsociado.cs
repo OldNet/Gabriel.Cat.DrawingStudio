@@ -30,13 +30,39 @@ namespace Gabriel.Cat.DrawingStudio
 
         private byte Posicion(byte[] color)
         { return color[Pixel.A]; }
-        public byte[] ObtenerPrimero(byte[] key)
+        /// <summary>
+        /// es para ir rapido
+        /// </summary>
+        /// <param name="key"></param>
+        /// <returns></returns>
+        public byte[] ObtenerColorByteArray(byte[] key)
         {
             byte[] color = null;
             int pos = Posicion(key);
             if(diccionario[pos]!=null)
                color = diccionario[pos].ObtenerPrimero(key);
             return color;
+        }
+
+        public Color? ObtenerColor(Color key)
+        {
+            byte[] colorBytes = ObtenerColorByteArray(ToByteArrayInverted(key));
+            Color? color = colorBytes == null ? new Color?() : Color.FromArgb(colorBytes[Pixel.B], colorBytes[Pixel.G], colorBytes[Pixel.R], colorBytes[Pixel.A]);
+            return color;
+        }
+        public Color?[] ObtenerColores(Color key)
+        {
+            List<Color?> colores = new List<Color?>();
+            Color? color;
+            byte[] colorBytes;
+            byte[][] coloresByteArray = ObtenerTodos(ToByteArrayInverted(key));
+            for(int i=0;i<coloresByteArray.Length;i++)
+            {
+                colorBytes = coloresByteArray[i];
+                color = colorBytes == null ? new Color?() : Color.FromArgb(colorBytes[Pixel.B], colorBytes[Pixel.G], colorBytes[Pixel.R], colorBytes[Pixel.A]);
+                colores.Add(color);
+            }
+            return colores.ToArray();
         }
         public void Añadir(Color key, Color value)
         {
@@ -283,6 +309,100 @@ namespace Gabriel.Cat.DrawingStudio
         public override byte[][] ObtenerTodos(byte[] key)
         {
             return ((List<byte[]>)rango[key[Pixel.B]]).ToArray();
+        }
+    }
+
+    public class DiccionarioColor2
+    {
+        LlistaOrdenada<int, List<byte[]>> diccionario;
+        public DiccionarioColor2()
+        {
+            diccionario = new LlistaOrdenada<int, List<byte[]>>();
+        }
+
+        public DiccionarioColor2(IEnumerable<KeyValuePair<Color, Color>> colorsKeyValue):this()
+        {
+            Añadir(colorsKeyValue);
+        }
+
+        public void Añadir(IEnumerable<KeyValuePair<Color, Color>> colorsKeyValue)
+        {
+            if (colorsKeyValue != null)
+                foreach (KeyValuePair<Color, Color> colorKeyValue in colorsKeyValue)
+                    Añadir(colorKeyValue.Key, colorKeyValue.Value);
+        }
+
+        public void Añadir(Color key, Color value)
+        {
+            int keyArgb = key.ToArgb();
+            if (!diccionario.Existeix(keyArgb))
+                diccionario.Afegir(keyArgb, new List<byte[]>());
+            diccionario[keyArgb].Add(Serializar.GetBytes(value.ToArgb()));
+
+        }
+        public void Añadir(Color key, params Color[] values)
+        {
+            for (int i = 0; i < values.Length; i++)
+                Añadir(key, values[i]);
+        }
+        public void Eliminar(Color key,int index)
+        {
+            int keyArgb = key.ToArgb();
+            if (diccionario.Existeix(keyArgb))
+                diccionario[keyArgb].RemoveAt(index);
+        }
+        public void Eliminar(Color key)
+        {
+            diccionario.Elimina(key.ToArgb());
+        }
+        public Color? ObtenerPrimero(Color key)
+        {
+            return ObtenerPrimero(key.ToArgb());
+        }
+        public Color? ObtenerPrimero(int key)
+        {
+            Color? value;
+            if (diccionario.Existeix(key))
+                value =Color.FromArgb(Serializar.ToInt( diccionario[key][0]));
+            else
+                value = new Color?();
+            return value;
+        }
+        /*   public byte[] ObtenerPrimero(byte[] key)
+           {
+               byte[] byteColor=null;
+               Color? color=ObtenerPrimero(Color.FromArgb(Serializar.ToInt(key)));
+               if (color != null)
+                   byteColor = Serializar.GetBytes(color.Value.ToArgb());
+               return byteColor;
+           }*/
+        public byte[] ObtenerPrimero(byte[] key)
+        {
+            int keyArgb = Serializar.ToInt(key);
+            List<byte[]> coloresList;
+            byte[] color = null;
+            if (diccionario.Existeix(keyArgb))
+            {
+                coloresList = diccionario[keyArgb];
+                if (coloresList != null && coloresList.Count > 0)
+                    color = coloresList[0];
+            }
+            return color;
+        }
+        public Color?[] ObtenerTodos(Color key)
+        {
+            List<Color?> colores = new List<Color?>();
+            int keyArgb = key.ToArgb();
+            List<byte[]> coloresList;
+            if (diccionario.Existeix(keyArgb))
+            {
+                coloresList = diccionario[keyArgb];
+                for (int i = 0; i < coloresList.Count; i++)
+                {
+                    colores.Add(Color.FromArgb(Serializar.ToInt(coloresList[i])));
+                }
+            }
+            return colores.ToArray();
         }
     }
 
