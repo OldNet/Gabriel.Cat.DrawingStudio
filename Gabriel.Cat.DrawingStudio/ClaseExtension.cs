@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Gabriel.Cat.DrawingStudio;
+using AForge.Imaging.Filters;
+
 namespace Gabriel.Cat.Extension
 {
     public static class ExtensionBitmap
@@ -119,7 +121,7 @@ namespace Gabriel.Cat.Extension
             IntPtr ptr = bmpData.Scan0;
 
             // Declare an array to hold the bytes of the bitmap.
-            int bytes = Math.Abs(bmpData.Stride) * bmp.Height;
+            int bytes = System.Math.Abs(bmpData.Stride) * bmp.Height;
 
             byte[] rgbValues = new byte[bytes];
 
@@ -172,68 +174,31 @@ namespace Gabriel.Cat.Extension
         }
 
 
-        public static Bitmap ChangeColorCopy(this Bitmap bmp, PixelColors color)
+        public static unsafe Bitmap ChangeColor(this Bitmap bmp, PixelColors color)
         {
-            Bitmap bmpClon = bmp.Clone() as Bitmap;
-            ChangeColor(bmpClon, color);
-            return bmpClon;
-        }
-        public static unsafe void ChangeColor(this Bitmap bmp, PixelColors color)
-        {
-            bmp.TrataBytes((rgbArray) => { ICambiaColor(rgbArray, bmp.IsArgb(), bmp.LengthBytes(), color); });
-        }
-
-        private static unsafe void ICambiaColor(byte* rgbImg, bool isArgb, int lenght, PixelColors color)
-        {
-            int r = 0, g = 1, b = 2;
-            byte byteR, byteG, byteB;
-            int incremento = 3;
-            MetodoTrataMientoPixel metodoTratamiento=null;
-            if (isArgb)
+            IFilter filtro=null;
+            switch(color)
             {
-                incremento++;
-            }
-            switch (color)
-            {
-                case PixelColors.Sepia:
-                  metodoTratamiento=  Image.IToSepia;
-                    break;
-                case PixelColors.Inverted:
-                    metodoTratamiento = Image.ToInvertit;
-                    break;
-                case PixelColors.GrayScale:
-                    metodoTratamiento = Image.ToEscalaDeGrises;
-                    break;
-                case PixelColors.Blue:
-                    metodoTratamiento = Image.ToAzul;
-                    break;
                 case PixelColors.Red:
-                    metodoTratamiento = Image.ToRojo;
-                    break;
+                    filtro = new AForge.Imaging.Filters.ChannelFiltering(new AForge.IntRange(0, 255), new AForge.IntRange(0, 0), new AForge.IntRange(0, 0)); break;
                 case PixelColors.Green:
-                    metodoTratamiento = Image.ToVerde;
-                    break;
-
-
+                    filtro = new AForge.Imaging.Filters.ChannelFiltering(new AForge.IntRange(0, 0), new AForge.IntRange(0, 255), new AForge.IntRange(0, 0)); break;
+                case PixelColors.Blue:
+                    filtro = new AForge.Imaging.Filters.ChannelFiltering(new AForge.IntRange(0, 0), new AForge.IntRange(0, 0), new AForge.IntRange(0, 255)); break;
+                case PixelColors.Sepia:
+                    filtro = new AForge.Imaging.Filters.Sepia(); break;
+                case PixelColors.GrayScale:
+                    filtro =  AForge.Imaging.Filters.Grayscale.CommonAlgorithms.BT709; break;
+                case PixelColors.Inverted:
+                    filtro =new AForge.Imaging.Filters.Invert(); break;
             }
-            //me salto el alfa
-            for (int i = 0; i < lenght; i += incremento)
-            {
-
-
-                byteR = rgbImg[i + r];
-                byteG = rgbImg[i + g];
-                byteB = rgbImg[i + b];
-
-                metodoTratamiento(ref byteR,ref byteG,ref byteB);
-                rgbImg[i + r] = byteR;
-                rgbImg[i + g] = byteG;
-                rgbImg[i + b] = byteB;
-
-            }
-
+           return filtro.Apply(bmp);
         }
 
+        public static Bitmap Clone(this Bitmap bmp,PixelFormat format)
+        {
+            return bmp.Clone(new Rectangle(new Point(), bmp.Size), format);
+        }
         #endregion
 
         public static void CambiarPixel(this Bitmap bmp, Color aEnontrar, Color aDefinir)
