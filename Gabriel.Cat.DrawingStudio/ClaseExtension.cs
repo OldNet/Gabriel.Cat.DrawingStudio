@@ -177,6 +177,7 @@ namespace Gabriel.Cat.Extension
         public static unsafe Bitmap ChangeColor(this Bitmap bmp, PixelColors color)
         {
             IFilter filtro=null;
+
             switch(color)
             {
                 case PixelColors.Red:
@@ -191,10 +192,10 @@ namespace Gabriel.Cat.Extension
                     filtro =  AForge.Imaging.Filters.Grayscale.CommonAlgorithms.BT709; break;
                 case PixelColors.Inverted:
                     filtro =new AForge.Imaging.Filters.Invert(); break;
-            }
-           return filtro.Apply(bmp);
+            } 
+            return filtro.Apply(bmp); 
         }
-
+     
         public static Bitmap Clone(this Bitmap bmp,PixelFormat format)
         {
             return bmp.Clone(new Rectangle(new Point(), bmp.Size), format);
