@@ -114,65 +114,6 @@ namespace Gabriel.Cat.Extension
 
         }
 
-        public static void TrataBytes(this Bitmap bmp, MetodoTratarByteArray metodo)
-        {
-            BitmapData bmpData = bmp.LockBits();
-            // Get the address of the first line.
-            IntPtr ptr = bmpData.Scan0;
-
-            // Declare an array to hold the bytes of the bitmap.
-            int bytes = System.Math.Abs(bmpData.Stride) * bmp.Height;
-
-            byte[] rgbValues = new byte[bytes];
-
-            // Copy the RGB values into the array.
-            ptr.CopyTo(rgbValues);
-            if (metodo != null)
-            {
-                metodo(rgbValues);//se modifican los bytes :D
-                                  // Copy the RGB values back to the bitmap
-                rgbValues.CopyTo(ptr);
-            }
-            // Unlock the bits.
-            bmp.UnlockBits(bmpData);
-
-        }
-        public static unsafe void TrataBytes(this Bitmap bmp, MetodoTratarBytePointer metodo)
-        {
-
-            BitmapData bmpData = bmp.LockBits();
-            // Get the address of the first line.
-
-            IntPtr ptr = bmpData.Scan0;
-            if (metodo != null)
-            {
-                metodo((byte*)ptr.ToPointer());//se modifican los bytes :D
-            }
-            // Unlock the bits.
-            bmp.UnlockBits(bmpData);
-
-        }
-        public static int LengthBytes(this Bitmap bmp)
-        {
-            int multiplicadorPixel = bmp.IsArgb() ? 4 : 3;
-            return bmp.Height * bmp.Width * multiplicadorPixel;
-        }
-        public static bool IsArgb(this Bitmap bmp)
-        {
-            bool isArgb = false;
-            switch (bmp.PixelFormat)
-            {
-                case PixelFormat.Format16bppArgb1555:
-                case PixelFormat.Format32bppArgb:
-                case PixelFormat.Format32bppPArgb:
-                case PixelFormat.Format64bppArgb:
-                case PixelFormat.Format64bppPArgb:
-                    isArgb = true;
-                    break;
-            }
-            return isArgb;
-        }
-
 
         public static unsafe Bitmap ChangeColor(this Bitmap bmp, PixelColors color)
         {
