@@ -158,12 +158,12 @@ namespace Gabriel.Cat
         }
 
 
-        public unsafe Bitmap CrearCollage()
+        public  Bitmap CrearCollage()
         {
             //funciona bien ;)
             //al usar punteros ahora va 3 veces mas rapido :) //aun se puede optimizar 4 veces mas osea un total de 12 veces mas rapi:D
             const byte OPACO = 0xFF, TRANSPARENTE = 0x00;
-            byte byteR, byteG, byteB, byteA;
+            byte byteR, byteG, byteB, byteA, byteRTotal, byteGTotal, byteBTotal, byteATotal;
             Color colorMezclado;
             int argbMultiplicador;
             int amplitudBitmapMax = 1, amplitudBitmapMin = 0;
@@ -189,51 +189,79 @@ namespace Gabriel.Cat
                 imagen = new Bitmap(amplitudBitmapMax + (amplitudBitmapMin * -1), alturaBitmapMax + (alturaBitmapMin * -1), ImageBase.DefaultPixelFormat);
                 argbMultiplicador = imagen.IsArgb() ? 4 : 3;
                 saltoLinea = amplitudBitmapMax * argbMultiplicador;  //multiplico por 4 porque la amplitud de la tabla es en bytes no en Pixels por lo tanto Argb
-                imagen.TrataBytes((MetodoTratarBytePointer)((bytesImgTotal) =>
+                unsafe
                 {
+                    byte* ptBytesImagenResultado, ptBytesImagenCollage;
+                    imagen.TrataBytes((MetodoTratarBytePointer)((ptrBytesImagenResultado) =>
+                    {
+                        ptBytesImagenResultado = ptrBytesImagenResultado;
                     //pongo en el bitmap los fragmentos de forma ordenada
                     for (int i = fragments.Count - 1; i >= 0; i--)
-                    {
-
-                        puntoXInicioFila = (saltoLinea * (fragments[i].Location.Y + (alturaBitmapMin * -1))) + (fragments[i].Location.X + (amplitudBitmapMin * -1)) * argbMultiplicador;  //multiplico por 4 porque la amplitud de la tabla es en bytes no en Pixels por lo tanto Argb
-                        fragments[i].Image.TrataBytes((MetodoTratarBytePointer)((bytesImgFragmento) =>
                         {
-                            //pongo los fragmentos
-                            for (int y = 0, yFinal = fragments[i].Image.Height, xFinal = fragments[i].Image.Width * argbMultiplicador,posicionActual; y < yFinal; y++, puntoXInicioFila += saltoLinea)
-                            {
 
-                                for (int x = 0; x < xFinal; x+=argbMultiplicador)
+                            puntoXInicioFila = (saltoLinea * (fragments[i].Location.Y + (alturaBitmapMin * -1))) + (fragments[i].Location.X + (amplitudBitmapMin * -1)) * argbMultiplicador;  //multiplico por 4 porque la amplitud de la tabla es en bytes no en Pixels por lo tanto Argb
+                            ptBytesImagenResultado += puntoXInicioFila;
+                            fragments[i].Image.TrataBytes((MetodoTratarBytePointer)((ptrBytesImagenCollage) =>
+                            {
+                                ptBytesImagenCollage = ptrBytesImagenCollage;
+                            //pongo los fragmentos
+                            for (int y = 0, yFinal = fragments[i].Image.Height, xFinal = fragments[i].Image.Width * argbMultiplicador; y < yFinal; y++, puntoXInicioFila += saltoLinea)
                                 {
-                                    posicionActual =y * xFinal + x;
-                                    if (argbMultiplicador == 3||bytesImgFragmento[posicionActual + Pixel.A] == OPACO)
+
+                                    for (int x = 0; x < xFinal; x += argbMultiplicador)
                                     {
-                                        //ahora tengo que poner la matriz donde toca...
-                                        bytesImgTotal[puntoXInicioFila + x + Pixel.R] = bytesImgFragmento[posicionActual + Pixel.R];
-                                        bytesImgTotal[puntoXInicioFila + x + Pixel.G] = bytesImgFragmento[posicionActual + Pixel.G];
-                                        bytesImgTotal[puntoXInicioFila + x + Pixel.B] = bytesImgFragmento[posicionActual + Pixel.B];
-                                        if(argbMultiplicador==4)
-                                          bytesImgTotal[puntoXInicioFila + x + Pixel.A] = bytesImgFragmento[posicionActual + Pixel.A];
-                                        //problema con las imagenes con transparencias donde el pixel transparente se come el no transparente...
-                                    }
-                                    else if(bytesImgFragmento[posicionActual + Pixel.A] != TRANSPARENTE)//si el pixel no es transparente 100% lo mezclo :)
+
+                                        if (argbMultiplicador == 3 || *ptBytesImagenCollage== OPACO)
+                                        {
+                                            //ahora tengo que poner la matriz donde toca...
+                                            for (int j = 0; j < argbMultiplicador; j++)
+                                            {
+                                                *ptBytesImagenResultado = *ptBytesImagenCollage;
+                                                ptBytesImagenResultado++;
+                                                ptBytesImagenCollage++;
+                                            }
+                                        
+                                            //problema con las imagenes con transparencias donde el pixel transparente se come el no transparente...
+                                        }
+                                        else if (*ptBytesImagenCollage != TRANSPARENTE)//si el pixel no es transparente 100% lo mezclo :)
                                     {
-                                        //lo mezcla
-                                        byteR = bytesImgFragmento[posicionActual + Pixel.R];
-                                        byteG = bytesImgFragmento[posicionActual + Pixel.G];
-                                        byteB = bytesImgFragmento[posicionActual + Pixel.B];
-                                        byteA = bytesImgFragmento[posicionActual + Pixel.A];
-                                        colorMezclado=Image.MezclaPixels(bytesImgTotal[puntoXInicioFila + x + Pixel.R], bytesImgTotal[puntoXInicioFila + x + Pixel.G], bytesImgTotal[puntoXInicioFila + x + Pixel.B], bytesImgTotal[puntoXInicioFila + x + Pixel.A], byteR, byteG, byteB, byteA);
-                                        bytesImgTotal[puntoXInicioFila + x + Pixel.R] = colorMezclado.R;
-                                        bytesImgTotal[puntoXInicioFila + x + Pixel.G] = colorMezclado.G;
-                                        bytesImgTotal[puntoXInicioFila + x + Pixel.B] = colorMezclado.B;
-                                        bytesImgTotal[puntoXInicioFila + x + Pixel.A] = colorMezclado.A;
+                                           
+                                            byteR = *ptBytesImagenCollage;
+                                            ptBytesImagenCollage++;
+                                            byteG = *ptBytesImagenCollage;
+                                            ptBytesImagenCollage++;
+                                            byteB = *ptBytesImagenCollage;
+                                            ptBytesImagenCollage++;
+                                            byteA = *ptBytesImagenCollage;
+                                            byteRTotal = *ptBytesImagenResultado;
+                                            ptBytesImagenResultado++;
+                                            byteGTotal = *ptBytesImagenResultado;
+                                            ptBytesImagenResultado++;
+                                            byteBTotal = *ptBytesImagenResultado;
+                                            ptBytesImagenResultado++;
+                                            byteATotal = *ptBytesImagenResultado;
+                                            ptBytesImagenResultado -= 3;//reinicio el color para poderlo sobreescribir con el nuevo
+                                            //lo mezcla
+                                            colorMezclado = Image.MezclaPixels(byteRTotal, byteGTotal, byteBTotal, byteATotal, byteR, byteG, byteB, byteA);
+                                            *ptBytesImagenResultado = colorMezclado.R;
+                                            ptBytesImagenResultado++;
+                                            *ptBytesImagenResultado = colorMezclado.G;
+                                            ptBytesImagenResultado++;
+                                            *ptBytesImagenResultado = colorMezclado.B;
+                                            ptBytesImagenResultado++;
+                                            *ptBytesImagenResultado = colorMezclado.A;
+                                            ptBytesImagenResultado++;
+                                        }
                                     }
                                 }
-                            }
-                        }));
-                    }
-                }));
+                            ptBytesImagenResultado-= fragments[i].Image.Height* fragments[i].Image.Width * argbMultiplicador;//reinicio el puntero
+                            }));
 
+                            ptBytesImagenResultado -= puntoXInicioFila;
+                        }
+                    }));
+
+                }
             }
             return imagen;
         }
