@@ -7,6 +7,7 @@ using Gabriel.Cat.Extension;
 
 namespace Gabriel.Cat
 {
+
     public enum PixelColors//no se si tiene un nombre descriptivo...
     {
         Red,
@@ -377,7 +378,7 @@ namespace Gabriel.Cat
             r = 0;
             b = 0;
         }
-        public static void ToInvertit(ref byte r, ref byte g, ref byte b)
+        public static void ToInvertido(ref byte r, ref byte g, ref byte b)
         {
             r = (byte)(255 - r);
             g = (byte)(255 - g);

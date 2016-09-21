@@ -32,9 +32,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Aforge.Drawing">
-      <HintPath>..\..\Aforge.Drawing\Aforge.Drawing\bin\Release\Aforge.Drawing.dll</HintPath>
-    </Reference>
     <Reference Include="Gabriel.Cat.Binaris">
       <HintPath>..\..\Gabriel.Cat.Binaris\bin\Release\Gabriel.Cat.Binaris.dll</HintPath>
     </Reference>

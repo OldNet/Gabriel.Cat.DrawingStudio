@@ -7,8 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Gabriel.Cat.DrawingStudio;
-using AForge.Imaging.Filters;
-
 namespace Gabriel.Cat.Extension
 {
     public static class ExtensionBitmap
@@ -141,26 +139,57 @@ namespace Gabriel.Cat.Extension
         }
 
 
-        public static unsafe Bitmap ChangeColor(this Bitmap bmp, PixelColors color)
+        public static  Bitmap ChangeColor(this Bitmap bmp, PixelColors color)
         {
-            IFilter filtro=null;
-
-            switch(color)
+            MetodoTrataMientoPixel metodo = null;
+            bool esArgb = bmp.IsArgb();
+            int incremento = esArgb ? 4 : 3;
+           
+            Bitmap bmpResultado = bmp.Clone() as Bitmap;
+            byte r, g, b;
+            switch (color)
             {
                 case PixelColors.Red:
-                    filtro = new AForge.Imaging.Filters.ChannelFiltering(new AForge.IntRange(0, 255), new AForge.IntRange(0, 0), new AForge.IntRange(0, 0)); break;
+                    metodo = Image.ToRojo;break;
                 case PixelColors.Green:
-                    filtro = new AForge.Imaging.Filters.ChannelFiltering(new AForge.IntRange(0, 0), new AForge.IntRange(0, 255), new AForge.IntRange(0, 0)); break;
+                    metodo = Image.ToVerde; break;
                 case PixelColors.Blue:
-                    filtro = new AForge.Imaging.Filters.ChannelFiltering(new AForge.IntRange(0, 0), new AForge.IntRange(0, 0), new AForge.IntRange(0, 255)); break;
+                    metodo = Image.ToAzul; break;
                 case PixelColors.Sepia:
-                    filtro = new AForge.Imaging.Filters.Sepia(); break;
+                    metodo = Image.IToSepia; break;
                 case PixelColors.GrayScale:
-                    filtro =  AForge.Imaging.Filters.Grayscale.CommonAlgorithms.BT709; break;
+                    metodo = Image.ToEscalaDeGrises; break;
                 case PixelColors.Inverted:
-                    filtro =new AForge.Imaging.Filters.Invert(); break;
-            } 
-            return filtro.Apply(bmp); 
+                    metodo = Image.ToInvertido; break;
+            }
+            unsafe {
+                
+                bmpResultado.TrataBytes((MetodoTratarBytePointer)((ptrBytesBmp) =>
+                {
+                    byte* ptBytesBmp = ptrBytesBmp;
+                    //aplico el filtro
+                    for(int i=0,f=bmp.Height*bmp.Width*incremento;i<f;i+=incremento)
+                    {
+                        if (esArgb)//me salto el componente Alfa
+                            ptBytesBmp++;
+                        r = *ptBytesBmp;
+                        ptBytesBmp++;
+                        g = *ptBytesBmp;
+                        ptBytesBmp++;
+                        b = *ptBytesBmp;
+                        ptBytesBmp-=2;//lo reseteo para poderlo modificar
+                        metodo(ref r,ref g,ref b);
+                        *ptBytesBmp = r;
+                        ptBytesBmp++;
+                        *ptBytesBmp =g;
+                        ptBytesBmp++;
+                        *ptBytesBmp = b;
+                        ptBytesBmp++;
+                    }
+                }));
+            }
+            return bmpResultado;
+           
         }
      
         public static Bitmap Clone(this Bitmap bmp,PixelFormat format)
