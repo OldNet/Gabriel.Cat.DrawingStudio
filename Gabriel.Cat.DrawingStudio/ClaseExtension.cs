@@ -11,8 +11,9 @@ namespace Gabriel.Cat.Extension
 {
     public static class ExtensionBitmap
     {
-        delegate byte[] MetodoColor(byte[] colorValue,byte[] colorKey);
+        delegate byte[] MetodoColor(byte[] colorValue, byte[] colorKey);
         delegate void MetodoTrataMientoPixel(ref byte r, ref byte g, ref byte b);
+        unsafe delegate void TratarImg(byte* ptrImg);
         #region BitmapImportado
         /// <summary>
         /// Recorta una imagen en formato Bitmap
@@ -66,7 +67,7 @@ namespace Gabriel.Cat.Extension
             {
                 bmp.TrataBytes(((MetodoTratarBytePointer)((ptrBytesBmp) =>
                 {
-                   
+
                     byte* ptBytesBmp = ptrBytesBmp;
                     for (int y = 0, yFinal = bmp.Width; y < yFinal; y++)
                         for (int x = 0, xFinal = bmp.Height; x < xFinal; x++, posicion += 4)
@@ -119,7 +120,7 @@ namespace Gabriel.Cat.Extension
         }
         public static void SetMatriuBytes(this Bitmap bmp, byte[,] matriuBytes)
         {
-            if (bmp.Height * bmp.Width * (bmp.IsArgb()?4:3) != matriuBytes.GetLength(DimensionMatriz.Y) * matriuBytes.GetLength(DimensionMatriz.X))
+            if (bmp.Height * bmp.Width * (bmp.IsArgb() ? 4 : 3) != matriuBytes.GetLength(DimensionMatriz.Y) * matriuBytes.GetLength(DimensionMatriz.X))
                 throw new Exception("La matriz no tiene las medidas de la imagen");
             unsafe
             {
@@ -130,7 +131,7 @@ namespace Gabriel.Cat.Extension
                         for (long x = 0, xFinal = matriuBytes.GetLongLength((int)DimensionMatriz.X); x < xFinal; x++)
                         {
                             *ptBytesBmp = matriuBytes[x, y];
-                             ptBytesBmp++;
+                            ptBytesBmp++;
                         }
 
 
@@ -139,68 +140,92 @@ namespace Gabriel.Cat.Extension
         }
 
 
-        public static  Bitmap ChangeColor(this Bitmap bmp, PixelColors color)
+        public static Bitmap ChangeColor(this Bitmap bmp, PixelColors color)
         {
-            MetodoTrataMientoPixel metodo = null;
-            bool esArgb = bmp.IsArgb();
-            int incremento = esArgb ? 4 : 3;
-            Bitmap bmpResultado =new Bitmap(bmp.Width,bmp.Height,bmp.PixelFormat);
-            byte r, g, b;
-            switch (color)
+            const int INCREMENTO = 4;
+            Bitmap bmpResultado = bmp.Clone(PixelFormat.Format32bppArgb);//asi hago que todas las imagenes tengan el mismo formato :D
+            TratarImg metodo = null;
+
+             unsafe
             {
-                case PixelColors.Red:
-                    metodo = Image.ToRojo;break;
-                case PixelColors.Green:
-                    metodo = Image.ToVerde; break;
-                case PixelColors.Blue:
-                    metodo = Image.ToAzul; break;
-                case PixelColors.Sepia:
-                    metodo = Image.IToSepia; break;
-                case PixelColors.GrayScale:
-                    metodo = Image.ToEscalaDeGrises; break;
-                case PixelColors.Inverted:
-                    metodo = Image.ToInvertido; break;
-            }
-            unsafe {
+                switch (color)
+                {
+                    case PixelColors.Red:
+                        metodo = ToRojo; break;
+                    case PixelColors.Green:
+                        metodo =ToVerde; break;
+                    case PixelColors.Blue:
+                        metodo = ToAzul; break;
+                    case PixelColors.Sepia:
+                        metodo = ToSepia; break;
+                    case PixelColors.GrayScale:
+                        metodo = ToEscalaDeGrises; break;
+                    case PixelColors.Inverted:
+                        metodo = ToInvertido; break;
+                }
 
-                bmp.TrataBytes((ptrBytesBmp) =>
+
+
+                bmpResultado.TrataBytes((ptrBytesBmpResultado) =>
                 {
-                 bmpResultado.TrataBytes((MetodoTratarBytePointer)((ptrBytesBmpResultado) =>
-                {
-                    byte* ptBytesBmp = ptrBytesBmp;
-                    byte* ptBytesBmpResultado = ptrBytesBmpResultado;
-                    //aplico el filtro
-                    for (int i = 0, f = bmp.Height * bmp.Width * incremento; i < f; i += incremento)
+                    for (byte* ptrFin=ptrBytesBmpResultado+bmp.Width*bmp.Height*INCREMENTO; ptrBytesBmpResultado!=ptrFin; ptrBytesBmpResultado += INCREMENTO)
                     {
-
-                        r = *ptBytesBmp;
-                        ptBytesBmp++;
-                        g = *ptBytesBmp;
-                        ptBytesBmp++;
-                        b = *ptBytesBmp;
-                        ptBytesBmp++;
-                        metodo(ref r, ref g, ref b);
-                        *ptBytesBmpResultado = r;
-                        ptBytesBmpResultado++;
-                        *ptBytesBmpResultado = g;
-                        ptBytesBmpResultado++;
-                        *ptBytesBmpResultado = b;
-                        ptBytesBmpResultado++;
-                        if (esArgb)//me salto el componente Alfa
-                        {
-                            *ptBytesBmpResultado = *ptBytesBmp;
-                            ptBytesBmpResultado++;
-                            ptBytesBmp++;
-                        }
+                        metodo(ptrBytesBmpResultado);
                     }
-                }));
                 });
+
             }
             return bmpResultado;
-           
+
         }
-     
-        public static Bitmap Clone(this Bitmap bmp,PixelFormat format)
+        #region Optimizacion
+
+         unsafe static void ToRojo(byte* ptImg)
+        {
+            ptImg[Pixel.G] = 0x0;
+            ptImg[Pixel.B] = 0x0;
+        }
+         unsafe static void ToAzul(byte* ptImg)
+        {
+            ptImg[Pixel.G] = 0x0;
+            ptImg[Pixel.R] = 0x0;
+        }
+         unsafe static void ToVerde(byte* ptImg)
+        {
+            ptImg[Pixel.R] = 0x0;
+            ptImg[Pixel.B] = 0x0;
+        }
+         unsafe static void ToInvertido(byte* ptImg)
+        {
+            ptImg[Pixel.R] = (byte)(255 - ptImg[Pixel.R]);
+            ptImg[Pixel.G] = (byte)(255 - ptImg[Pixel.G]);
+            ptImg[Pixel.B] = (byte)(255 - ptImg[Pixel.B]);
+        }
+         unsafe static void ToEscalaDeGrises(byte* ptImg)
+        {
+            ptImg[Pixel.R] = Convert.ToByte(0.2126 * ptImg[Pixel.R] + 0.7152 * ptImg[Pixel.G] + 0.0722 * ptImg[Pixel.B]);
+            ptImg[Pixel.G] = ptImg[Pixel.R];
+            ptImg[Pixel.B] = ptImg[Pixel.G];
+        }
+         unsafe static void ToSepia(byte* ptImg)
+        {
+            int rInt = Convert.ToInt32(ptImg[Pixel.R] * 0.393 + ptImg[Pixel.G] * 0.769 + ptImg[Pixel.B] * 0.189);
+            int gInt = Convert.ToInt32(ptImg[Pixel.R] * 0.349 + ptImg[Pixel.G] * 0.686 + ptImg[Pixel.B] * 0.168);
+            int bInt = Convert.ToInt32(ptImg[Pixel.R] * 0.272 + ptImg[Pixel.G] * 0.534 + ptImg[Pixel.B] * 0.131);
+            if (rInt > 255)
+                rInt = 255;
+            if (gInt > 255)
+                gInt = 255;
+            if (bInt > 255)
+                bInt = 255;
+            ptImg[Pixel.R] = (byte)rInt;
+            ptImg[Pixel.G] = (byte)gInt;
+            ptImg[Pixel.B] = (byte)bInt;
+        }
+
+
+        #endregion
+        public static Bitmap Clone(this Bitmap bmp, PixelFormat format)
         {
             return bmp.Clone(new Rectangle(new Point(), bmp.Size), format);
         }
@@ -212,13 +237,13 @@ namespace Gabriel.Cat.Extension
         }
         public static void CambiarPixel(this Bitmap bmp, IEnumerable<KeyValuePair<Color, Color>> colorsKeyValue)
         {
-            MetodoColor metodo = (colorValue,colorKey) =>
+            MetodoColor metodo = (colorValue, colorKey) =>
             {
                 return colorValue;
             };
             ICambiaPixel(bmp, colorsKeyValue, metodo);
         }
-        public static void EfectoPixel(this Bitmap bmp, Color aMezclarConTodos,bool saltarsePixelsTransparentes=true)
+        public static void EfectoPixel(this Bitmap bmp, Color aMezclarConTodos, bool saltarsePixelsTransparentes = true)
         {
             const int TOTALARGBBYTES = 4;
             int incremento = bmp.IsArgb() ? 4 : 3;
@@ -238,8 +263,8 @@ namespace Gabriel.Cat.Extension
                                 mezclar = *ptByteArray != TRANSPARENTE;
                             if (mezclar)
                             {
-                            //MEZCLO LA A
-                            aux = *ptByteArray + aMezclarConTodos.A;
+                                //MEZCLO LA A
+                                aux = *ptByteArray + aMezclarConTodos.A;
                                 if (aux > 255) aux = 255;
                                 *ptByteArray = (byte)aux;
                                 ptByteArray++;
@@ -247,8 +272,8 @@ namespace Gabriel.Cat.Extension
                         }
                         if (mezclar)
                         {
-                        //MEZCLO LA R
-                        aux = *ptByteArray + aMezclarConTodos.R;
+                            //MEZCLO LA R
+                            aux = *ptByteArray + aMezclarConTodos.R;
                             if (aux > 255) aux = 255;
                             *ptByteArray = (byte)aux;
                             ptByteArray++;
@@ -283,7 +308,7 @@ namespace Gabriel.Cat.Extension
                     unsafe
                     {
                         colorMezclado = new byte[TOTALBYTESCOLOR];
-                        fixed(byte* ptrColorMezclado = colorMezclado, ptrArrayKey=arrayKey)
+                        fixed (byte* ptrColorMezclado = colorMezclado, ptrArrayKey = arrayKey)
                         {
                             byte* ptColorMezclado = ptrColorMezclado, ptArrayKey = ptrArrayKey;
                             for (int i = 0; i < TOTALBYTESCOLOR; i++)
@@ -299,12 +324,12 @@ namespace Gabriel.Cat.Extension
                             }
                         }
                     }
-                    
+
                 }
-             /*   else if (colorValue != null)
-                    colorMezclado = colorValue;
-                else
-                    colorMezclado =Color.FromArgb(Serializar.ToInt( arrayKey));*/
+                /*   else if (colorValue != null)
+                       colorMezclado = colorValue;
+                   else
+                       colorMezclado =Color.FromArgb(Serializar.ToInt( arrayKey));*/
                 return colorMezclado;
             };
             ICambiaPixel(bmp, colorsKeyValue, metodo);
@@ -326,7 +351,7 @@ namespace Gabriel.Cat.Extension
                     for (int i = 0, iFin = bmp.LengthBytes(); i < iFin; i += incremento)
                     {
                         colorLeido = new byte[4];
-                        fixed(byte* ptrColorLeido=colorLeido)
+                        fixed (byte* ptrColorLeido = colorLeido)
                         {
                             ptColorLeido = ptrColorLeido;
                             if (incremento == TOTALBYTESCOLOR)
@@ -337,7 +362,7 @@ namespace Gabriel.Cat.Extension
                             else
                             {
                                 *ptColorLeido = AOPACA;
-                                 
+
                             }
                             ptColorLeido++;
                             for (int j = 1; j < incremento; j++)
@@ -348,21 +373,21 @@ namespace Gabriel.Cat.Extension
                             }
                             ptBytesBmp -= incremento;//vuelvo a poner el puntero al principio del color para sobreescribirlo con el nuevo
                         }
-                   
+
                         colorObtenido = metodo(diccionario.ObtenerPrimero(colorLeido), colorLeido);
                         if (colorObtenido != null)
                         {
                             fixed (byte* ptrColorObtenido = colorObtenido)
                             {
                                 ptColorObtenido = ptrColorObtenido;
-                                for (int j=0;j<incremento;j++)
+                                for (int j = 0; j < incremento; j++)
                                 {
                                     *ptBytesBmp = *ptColorObtenido;
                                     ptBytesBmp++;
                                     ptColorObtenido++;
                                 }
 
- 
+
                             }
                         }
 

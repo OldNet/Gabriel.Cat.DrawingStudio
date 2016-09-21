@@ -356,42 +356,6 @@ namespace Gabriel.Cat
         }
         public static Color ToSepia(byte r, byte g, byte b)
         {
-            byte rB = r, gB = g, bB = b;
-            IToSepia(ref rB, ref gB, ref bB);
-            return Color.FromArgb(rB, gB, bB);
-        }
-
-        #region Optimizacion
-
-       public  static void ToRojo(ref byte r, ref byte g, ref byte b)
-        {
-            g = 0;
-            r = 0;
-        }
-        public static void ToAzul(ref byte r, ref byte g, ref byte b)
-        {
-            g = 0;
-            b = 0;
-        }
-        public static void ToVerde(ref byte r, ref byte g, ref byte b)
-        {
-            r = 0;
-            b = 0;
-        }
-        public static void ToInvertido(ref byte r, ref byte g, ref byte b)
-        {
-            r = (byte)(255 - r);
-            g = (byte)(255 - g);
-            b = (byte)(255 - b);
-        }
-        public static void ToEscalaDeGrises(ref byte r, ref byte g, ref byte b)
-        {
-            b = (byte)Convert.ToInt32(0.2126 * r + 0.7152 * g + 0.0722 * b);
-            g = b;
-            r = g;
-        }
-        public static void IToSepia(ref byte r, ref byte g, ref byte b)
-        {
             int rInt = Convert.ToInt32(r * 0.393 + g * 0.769 + b * 0.189);
             int gInt = Convert.ToInt32(r * 0.349 + g * 0.686 + b * 0.168);
             int bInt = Convert.ToInt32(r * 0.272 + g * 0.534 + b * 0.131);
@@ -404,10 +368,10 @@ namespace Gabriel.Cat
             r = (byte)rInt;
             g = (byte)gInt;
             b = (byte)bInt;
+            return Color.FromArgb(r, g, b);
         }
 
 
-        #endregion
         #endregion
 
     }
