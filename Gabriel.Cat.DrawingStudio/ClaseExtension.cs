@@ -144,8 +144,7 @@ namespace Gabriel.Cat.Extension
             MetodoTrataMientoPixel metodo = null;
             bool esArgb = bmp.IsArgb();
             int incremento = esArgb ? 4 : 3;
-           
-            Bitmap bmpResultado = bmp.Clone() as Bitmap;
+            Bitmap bmpResultado =new Bitmap(bmp.Width,bmp.Height,bmp.PixelFormat);
             byte r, g, b;
             switch (color)
             {
@@ -163,30 +162,39 @@ namespace Gabriel.Cat.Extension
                     metodo = Image.ToInvertido; break;
             }
             unsafe {
-                
-                bmpResultado.TrataBytes((MetodoTratarBytePointer)((ptrBytesBmp) =>
+
+                bmp.TrataBytes((ptrBytesBmp) =>
+                {
+                 bmpResultado.TrataBytes((MetodoTratarBytePointer)((ptrBytesBmpResultado) =>
                 {
                     byte* ptBytesBmp = ptrBytesBmp;
+                    byte* ptBytesBmpResultado = ptrBytesBmpResultado;
                     //aplico el filtro
-                    for(int i=0,f=bmp.Height*bmp.Width*incremento;i<f;i+=incremento)
+                    for (int i = 0, f = bmp.Height * bmp.Width * incremento; i < f; i += incremento)
                     {
-                        if (esArgb)//me salto el componente Alfa
-                            ptBytesBmp++;
+
                         r = *ptBytesBmp;
                         ptBytesBmp++;
                         g = *ptBytesBmp;
                         ptBytesBmp++;
                         b = *ptBytesBmp;
-                        ptBytesBmp-=2;//lo reseteo para poderlo modificar
-                        metodo(ref r,ref g,ref b);
-                        *ptBytesBmp = r;
                         ptBytesBmp++;
-                        *ptBytesBmp =g;
-                        ptBytesBmp++;
-                        *ptBytesBmp = b;
-                        ptBytesBmp++;
+                        metodo(ref r, ref g, ref b);
+                        *ptBytesBmpResultado = r;
+                        ptBytesBmpResultado++;
+                        *ptBytesBmpResultado = g;
+                        ptBytesBmpResultado++;
+                        *ptBytesBmpResultado = b;
+                        ptBytesBmpResultado++;
+                        if (esArgb)//me salto el componente Alfa
+                        {
+                            *ptBytesBmpResultado = *ptBytesBmp;
+                            ptBytesBmpResultado++;
+                            ptBytesBmp++;
+                        }
                     }
                 }));
+                });
             }
             return bmpResultado;
            
