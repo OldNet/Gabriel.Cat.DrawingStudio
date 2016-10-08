@@ -11,7 +11,7 @@ namespace Gabriel.Cat.Binaris
 {
    public class CollageBinario:ElementoIEnumerableBinario
     {
-        public CollageBinario() : base(new ImageFragmentBinario(),(uint)0)
+        public CollageBinario() : base(new ImageFragmentBinario(),LongitudBinaria.UInt)
         {
 
         }
@@ -19,11 +19,11 @@ namespace Gabriel.Cat.Binaris
         {
             if (obj is Collage)
             {
-                LongitudUInt= Convert.ToUInt32((obj as Collage).Count);
+                Longitud = LongitudBinaria.UInt;
             }
             return base.GetBytes(obj);
         }
-        public override object GetObject(Stream bytes)
+        public override object GetObject(MemoryStream bytes)
         {
             return new Collage(((object[])base.GetObject(bytes)).Casting<ImageFragment>(false));
         }
@@ -50,7 +50,7 @@ namespace Gabriel.Cat.Binaris
             return bytesObj.ToArray();
         }
 
-        public override object GetObject(object[] parts)
+        protected override object GetObject(object[] parts)
         {
             PointZ location = parts[0] as PointZ;
             Bitmap bmp = null;
