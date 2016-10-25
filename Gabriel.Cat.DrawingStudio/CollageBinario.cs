@@ -32,8 +32,8 @@ namespace Gabriel.Cat.Binaris
     {
         public ImageFragmentBinario()
         {
-            base.PartesElemento.Afegir(ElementoBinario.ElementosTipoAceptado(Serializar.TiposAceptados.PointZ));
-            base.PartesElemento.Afegir(ElementoBinario.ElementosTipoAceptado(Serializar.TiposAceptados.Bitmap));
+            base.PartesElemento.Add(ElementoBinario.ElementosTipoAceptado(Serializar.TiposAceptados.PointZ));
+            base.PartesElemento.Add(ElementoBinario.ElementosTipoAceptado(Serializar.TiposAceptados.Bitmap));
         }
         public override byte[] GetBytes(object obj)
         {

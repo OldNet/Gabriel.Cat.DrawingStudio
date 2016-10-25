@@ -31,7 +31,7 @@ namespace Gabriel.Cat
         }
         public Collage(IEnumerable<ImageFragment> imgsCollage) : this()
         {
-            fragments.AfegirMolts(imgsCollage);
+            fragments.AddRange(imgsCollage);
         }
         public int Count
         {
@@ -44,11 +44,11 @@ namespace Gabriel.Cat
         }
         public void Add(ImageFragment imgFragment)
         {
-            fragments.Afegir(imgFragment);
+            fragments.Add(imgFragment);
         }
         public void Add(IEnumerable<ImageFragment> imgs)
         {
-            fragments.AfegirMolts(imgs);
+            fragments.AddRange(imgs);
         }
         public ImageFragment Add(Bitmap imatge, PointZ localizacio)
         {
@@ -78,18 +78,18 @@ namespace Gabriel.Cat
             ImageFragment fragment = null;
             PointZ location = new PointZ(x, y, z);
             fragment = new ImageFragment(imagen, location);
-            fragments.Afegir(fragment);
+            fragments.Add(fragment);
 
 
             return fragment;
         }
         public void RemoveAll()
         {
-            fragments.Buida();
+            fragments.Clear();
         }
         public void Remove(ImageFragment fragmento)
         {
-            fragments.Elimina(fragmento);
+            fragments.Remove(fragmento);
         }
         public ImageFragment Remove(int x = 0, int y = 0, int z = 0)
         {
@@ -107,7 +107,7 @@ namespace Gabriel.Cat
             ImageFragment fragmentoQuitado = GetFragment(localizacion);
 
             if (fragmentoQuitado != null)
-                fragments.Elimina(fragmentoQuitado);
+                fragments.Remove(fragmentoQuitado);
 
             return fragmentoQuitado;
         }
@@ -157,11 +157,11 @@ namespace Gabriel.Cat
                 if (img != null)
                 {//los quito para no molestar
                     fragmentosSeleccionados.Add(img);
-                    fragments.Elimina(img);
+                    fragments.Remove(img);
                 }
             } while (img != null);
 
-            fragments.AfegirMolts(fragmentosSeleccionados);
+            fragments.AddRange(fragmentosSeleccionados);
 
             return fragmentosSeleccionados.ToArray();
         }

@@ -335,8 +335,8 @@ namespace Gabriel.Cat.DrawingStudio
         public void Añadir(Color key, Color value)
         {
             int keyArgb = key.ToArgb();
-            if (!diccionario.Existeix(keyArgb))
-                diccionario.Afegir(keyArgb, new List<byte[]>());
+            if (!diccionario.ContainsKey(keyArgb))
+                diccionario.Add(keyArgb, new List<byte[]>());
             diccionario[keyArgb].Add(Serializar.GetBytes(value.ToArgb()));
 
         }
@@ -348,12 +348,12 @@ namespace Gabriel.Cat.DrawingStudio
         public void Eliminar(Color key,int index)
         {
             int keyArgb = key.ToArgb();
-            if (diccionario.Existeix(keyArgb))
+            if (diccionario.ContainsKey(keyArgb))
                 diccionario[keyArgb].RemoveAt(index);
         }
         public void Eliminar(Color key)
         {
-            diccionario.Elimina(key.ToArgb());
+            diccionario.Remove(key.ToArgb());
         }
         public Color? ObtenerPrimero(Color key)
         {
@@ -362,7 +362,7 @@ namespace Gabriel.Cat.DrawingStudio
         public Color? ObtenerPrimero(int key)
         {
             Color? value;
-            if (diccionario.Existeix(key))
+            if (diccionario.ContainsKey(key))
                 value =Color.FromArgb(Serializar.ToInt( diccionario[key][0]));
             else
                 value = new Color?();
@@ -381,7 +381,7 @@ namespace Gabriel.Cat.DrawingStudio
             int keyArgb = Serializar.ToInt(key);
             List<byte[]> coloresList;
             byte[] color = null;
-            if (diccionario.Existeix(keyArgb))
+            if (diccionario.ContainsKey(keyArgb))
             {
                 coloresList = diccionario[keyArgb];
                 if (coloresList != null && coloresList.Count > 0)
@@ -394,7 +394,7 @@ namespace Gabriel.Cat.DrawingStudio
             List<Color?> colores = new List<Color?>();
             int keyArgb = key.ToArgb();
             List<byte[]> coloresList;
-            if (diccionario.Existeix(keyArgb))
+            if (diccionario.ContainsKey(keyArgb))
             {
                 coloresList = diccionario[keyArgb];
                 for (int i = 0; i < coloresList.Count; i++)
