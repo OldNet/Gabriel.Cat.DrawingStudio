@@ -52,8 +52,6 @@ namespace Gabriel.Cat
         }
         public ImageFragment Add(Bitmap imatge, PointZ localizacio)
         {
-            if (localizacio == null)
-                throw new ArgumentNullException("Se necesita una localizacion");
             return Add(imatge, localizacio.X, localizacio.Y, localizacio.Z);
         }
 
@@ -101,9 +99,6 @@ namespace Gabriel.Cat
         }
         public ImageFragment Remove(PointZ localizacion)
         {
-            if (localizacion == null)
-                throw new ArgumentNullException("Se necesita un punto para localizar el fragmento");
-
             ImageFragment fragmentoQuitado = GetFragment(localizacion);
 
             if (fragmentoQuitado != null)
@@ -416,8 +411,6 @@ namespace Gabriel.Cat
         }
         public ImageFragment(Bitmap imagen, PointZ localizacion)
         {
-            if (localizacion == null)
-                throw new ArgumentNullException("Necesita una localizacion!");
             if (imagen == null)
                 throw new NullReferenceException("La imagen no puede ser null");
             this.imagen = new ImageBase(imagen);

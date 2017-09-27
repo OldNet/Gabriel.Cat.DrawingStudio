@@ -337,7 +337,7 @@ namespace Gabriel.Cat.DrawingStudio
             int keyArgb = key.ToArgb();
             if (!diccionario.ContainsKey(keyArgb))
                 diccionario.Add(keyArgb, new List<byte[]>());
-            diccionario[keyArgb].Add(Serializar.GetBytes(value.ToArgb()));
+            diccionario[keyArgb].Value.Add(Serializar.GetBytes(value.ToArgb()));
 
         }
         public void Añadir(Color key, params Color[] values)
@@ -349,7 +349,7 @@ namespace Gabriel.Cat.DrawingStudio
         {
             int keyArgb = key.ToArgb();
             if (diccionario.ContainsKey(keyArgb))
-                diccionario[keyArgb].RemoveAt(index);
+                diccionario[keyArgb].Value.RemoveAt(index);
         }
         public void Eliminar(Color key)
         {
@@ -363,7 +363,7 @@ namespace Gabriel.Cat.DrawingStudio
         {
             Color? value;
             if (diccionario.ContainsKey(key))
-                value =Color.FromArgb(Serializar.ToInt( diccionario[key][0]));
+                value =Color.FromArgb(Serializar.ToInt( diccionario[key].Value[0]));
             else
                 value = new Color?();
             return value;
@@ -383,7 +383,7 @@ namespace Gabriel.Cat.DrawingStudio
             byte[] color = null;
             if (diccionario.ContainsKey(keyArgb))
             {
-                coloresList = diccionario[keyArgb];
+            	coloresList = diccionario.GetValue(keyArgb);
                 if (coloresList != null && coloresList.Count > 0)
                     color = coloresList[0];
             }
@@ -396,7 +396,7 @@ namespace Gabriel.Cat.DrawingStudio
             List<byte[]> coloresList;
             if (diccionario.ContainsKey(keyArgb))
             {
-                coloresList = diccionario[keyArgb];
+            	coloresList = diccionario.GetValue(keyArgb);
                 for (int i = 0; i < coloresList.Count; i++)
                 {
                     colores.Add(Color.FromArgb(Serializar.ToInt(coloresList[i])));
