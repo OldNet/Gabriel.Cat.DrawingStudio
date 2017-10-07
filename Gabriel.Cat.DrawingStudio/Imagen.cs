@@ -64,14 +64,12 @@ namespace Gabriel.Cat
         /// <returns>devuelve null si no lo a podido añadir</returns>
         public ImageFragment Add(Bitmap imatge, Point localizacio, int capa = 0)
         {
-            if (localizacio == null)
-                throw new ArgumentNullException("Se necesita una localizacion");
             return Add(imatge, localizacio.X, localizacio.Y, capa);
         }
         public ImageFragment Add(Bitmap imagen, int x = 0, int y = 0, int z = 0)
         {
             if (imagen == null)
-                throw new ArgumentNullException("Se necesita una imagen");
+                throw new ArgumentNullException("imagen","Se necesita una imagen");
 
             ImageFragment fragment = null;
             PointZ location = new PointZ(x, y, z);
@@ -184,106 +182,21 @@ namespace Gabriel.Cat
         }
         public Bitmap CrearCollage(Rectangle rctImgResultado)
         {
-            //se tiene que retocar para que no salga de la imagen...usar el rectangulo :)
-            const byte OPACO = 0xFF, TRANSPARENTE = 0x00;
-            byte byteR, byteG, byteB, byteA, byteRTotal, byteGTotal, byteBTotal, byteATotal;
-            Color colorMezclado;
-            int argbMultiplicador;
-            List<ImageFragment> fragmentsImg;
-            int saltoLinea;
-            Bitmap imagen = null;
-            int puntoXInicioFila;
-            if (fragments.Count != 0)
-            {
-                fragmentsImg = new List<ImageFragment>();
-                fragments.Ordena();//ordeno los fragmentos
-                for (int i = 0; i < fragments.Count; i++)
-                {
-                    if (fragments[i].IsInRectangle(rctImgResultado))
-                    {
-                        fragmentsImg.Add(fragments[i]);
-                    }
-                }
+        	const bool ISARGBBMPTOTAL=true;
+        	Bitmap bmpTotal=new Bitmap(rctImgResultado.Width,rctImgResultado.Height);
+        	fragments.Sort();//deberia poner los de la Z mas grande los primeros
+        	unsafe{
 
-                imagen = new Bitmap(rctImgResultado.Width, rctImgResultado.Height, ImageBase.DefaultPixelFormat);
-                argbMultiplicador = imagen.IsArgb() ? 4 : 3;
-                saltoLinea = rctImgResultado.Width * argbMultiplicador;  //multiplico por 4 porque la amplitud de la tabla es en bytes no en Pixels por lo tanto Argb
-                unsafe
-                {
-                    byte* ptBytesImagenResultado, ptBytesImagenCollage;
-                    imagen.TrataBytes((MetodoTratarBytePointer)((ptrBytesImagenResultado) =>
-                    {
-                        ptBytesImagenResultado = ptrBytesImagenResultado;
-                        //pongo en el bitmap los fragmentos de forma ordenada
-                        for (int i = fragmentsImg.Count - 1; i >= 0; i--)
-                        {
-
-                            puntoXInicioFila = (saltoLinea * (fragmentsImg[i].Location.Y - rctImgResultado.Y)) + (fragmentsImg[i].Location.X - rctImgResultado.X) * argbMultiplicador;  //multiplico por 4 porque la amplitud de la tabla es en bytes no en Pixels por lo tanto Argb
-                            ptBytesImagenResultado += puntoXInicioFila;
-                            fragmentsImg[i].Image.TrataBytes((MetodoTratarBytePointer)((ptrBytesImagenCollage) =>
-                            {
-                                ptBytesImagenCollage = ptrBytesImagenCollage;
-                                //pongo los fragmentos
-                                for (int y = 0, yFinal = fragmentsImg[i].Image.Height, xFinal = fragmentsImg[i].Image.Width * argbMultiplicador; y < yFinal; y++, puntoXInicioFila += saltoLinea)
-                                {
-
-                                    for (int x = 0; x < xFinal; x += argbMultiplicador)
-                                    {
-
-                                        if (argbMultiplicador == 3 || *ptBytesImagenCollage == OPACO)
-                                        {
-                                            //ahora tengo que poner la matriz donde toca...
-                                            for (int j = 0; j < argbMultiplicador; j++)
-                                            {
-                                                *ptBytesImagenResultado = *ptBytesImagenCollage;
-                                                ptBytesImagenResultado++;
-                                                ptBytesImagenCollage++;
-                                            }
-
-                                            //problema con las imagenes con transparencias donde el pixel transparente se come el no transparente...
-                                        }
-                                        else if (*ptBytesImagenCollage != TRANSPARENTE)//si el pixel no es transparente 100% lo mezclo :)
-                                        {
-
-                                            byteR = *ptBytesImagenCollage;
-                                            ptBytesImagenCollage++;
-                                            byteG = *ptBytesImagenCollage;
-                                            ptBytesImagenCollage++;
-                                            byteB = *ptBytesImagenCollage;
-                                            ptBytesImagenCollage++;
-                                            byteA = *ptBytesImagenCollage;
-                                            byteRTotal = *ptBytesImagenResultado;
-                                            ptBytesImagenResultado++;
-                                            byteGTotal = *ptBytesImagenResultado;
-                                            ptBytesImagenResultado++;
-                                            byteBTotal = *ptBytesImagenResultado;
-                                            ptBytesImagenResultado++;
-                                            byteATotal = *ptBytesImagenResultado;
-                                            ptBytesImagenResultado -= 3;//reinicio el color para poderlo sobreescribir con el nuevo
-                                            //lo mezcla
-                                            colorMezclado = Image.MezclaPixels(byteRTotal, byteGTotal, byteBTotal, byteATotal, byteR, byteG, byteB, byteA);
-                                            *ptBytesImagenResultado = colorMezclado.R;
-                                            ptBytesImagenResultado++;
-                                            *ptBytesImagenResultado = colorMezclado.G;
-                                            ptBytesImagenResultado++;
-                                            *ptBytesImagenResultado = colorMezclado.B;
-                                            ptBytesImagenResultado++;
-                                            *ptBytesImagenResultado = colorMezclado.A;
-                                            ptBytesImagenResultado++;
-                                        }
-                                    }
-                                }
-                                ptBytesImagenResultado -= fragmentsImg[i].Image.Height * fragmentsImg[i].Image.Width * argbMultiplicador;//reinicio el puntero
-                            }));
-
-                            ptBytesImagenResultado -= puntoXInicioFila;
-                        }
-                    }));
-
-                }
-            }
-            else imagen = new Bitmap(1, 1);
-            return imagen;
+        		bmpTotal.TrataBytes((ptTotal)=>{
+        	for(int i=0;i<fragments.Count;i++)
+        	{
+        		fixed(byte* ptFragmento=fragments[i].Image.GetBytes())
+        			Gabriel.Cat.BitmapExtension.SetFragment(ptTotal,bmpTotal.Height,bmpTotal.Width,ISARGBBMPTOTAL,ptFragmento,fragments[i].Image.Height,fragments[i].Image.Width,fragments[i].Image.IsArgb(),rctImgResultado.GetRelativePoint(new Point(fragments[i].Location.X,fragments[i].Location.Y)));
+        		
+        	}
+        	}
+        	
+        		});
         }
         public IEnumerator<ImageFragment> GetEnumerator()
         {
