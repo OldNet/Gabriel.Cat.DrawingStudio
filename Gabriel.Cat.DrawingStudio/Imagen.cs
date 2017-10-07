@@ -190,7 +190,7 @@ namespace Gabriel.Cat
         		bmpTotal.TrataBytes((ptTotal)=>{
         	for(int i=0;i<fragments.Count;i++)
         	{
-        		fixed(byte* ptFragmento=fragments[i].Image.GetBytes())
+        		fixed(byte* ptFragmento=fragments[i].RgbValues)
         			Gabriel.Cat.BitmapExtension.SetFragment(ptTotal,bmpTotal.Height,bmpTotal.Width,ISARGBBMPTOTAL,ptFragmento,fragments[i].Image.Height,fragments[i].Image.Width,fragments[i].Image.IsArgb(),rctImgResultado.GetRelativePoint(new Point(fragments[i].Location.X,fragments[i].Location.Y)));
         		
         	}
