@@ -140,7 +140,7 @@ namespace Gabriel.Cat.Extension
         }
 
 
-        public static Bitmap ChangeColor(this Bitmap bmp, PixelColors color)
+        public static Bitmap ChangeColor(this Bitmap bmp, FiltroImagen color)
         {
             const int INCREMENTO = 4;
             Bitmap bmpResultado = bmp.Clone(PixelFormat.Format32bppArgb);//asi hago que todas las imagenes tengan el mismo formato :D
@@ -150,17 +150,17 @@ namespace Gabriel.Cat.Extension
             {
                 switch (color)
                 {
-                    case PixelColors.Red:
+                    case FiltroImagen.Red:
                         metodo = ToRojo; break;
-                    case PixelColors.Green:
+                    case FiltroImagen.Green:
                         metodo =ToVerde; break;
-                    case PixelColors.Blue:
+                    case FiltroImagen.Blue:
                         metodo = ToAzul; break;
-                    case PixelColors.Sepia:
+                    case FiltroImagen.Sepia:
                         metodo = ToSepia; break;
-                    case PixelColors.GrayScale:
+                    case FiltroImagen.GrayScale:
                         metodo = ToEscalaDeGrises; break;
-                    case PixelColors.Inverted:
+                    case FiltroImagen.Inverted:
                         metodo = ToInvertido; break;
                 }
 
